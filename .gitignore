@@ -1,0 +1,28 @@
+# =============================================================================
+# Pi Network Tester - Git Ignore
+# =============================================================================
+
+# Auto-generated targets file (created by gateway_finder.sh)
+prometheus/targets/targets.json
+
+# Docker volumes (data is stored in named volumes, not local dirs)
+# But if you change to bind mounts, these would be ignored:
+data/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp

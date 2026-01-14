@@ -1,0 +1,76 @@
+# =============================================================================
+# Prometheus Configuration for Pi Network Tester
+# Optimized for Raspberry Pi 3 Model B (1GB RAM)
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'pi-network-tester'
+
+# =============================================================================
+# Scrape Configurations
+# =============================================================================
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # Prometheus Self-Monitoring
+  # ---------------------------------------------------------------------------
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          instance: 'prometheus'
+
+  # ---------------------------------------------------------------------------
+  # Node Exporter - Raspberry Pi System Metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          instance: 'raspberry-pi'
+
+  # ---------------------------------------------------------------------------
+  # Blackbox Exporter - ICMP Ping Monitoring
+  # Uses file_sd_configs for dynamic target discovery
+  # ---------------------------------------------------------------------------
+  - job_name: 'blackbox-icmp'
+    metrics_path: /probe
+    params:
+      module: [icmp]
+    file_sd_configs:
+      - files:
+          - '/etc/prometheus/targets/*.json'
+        refresh_interval: 1m
+    relabel_configs:
+      # Pass the target to the blackbox exporter
+      - source_labels: [__address__]
+        target_label: __param_target
+      # Keep the original target as a label
+      - source_labels: [__param_target]
+        target_label: target
+      # Replace the address with blackbox exporter address
+      - target_label: __address__
+        replacement: blackbox:9115
+
+  # ---------------------------------------------------------------------------
+  # Speedtest Exporter - Bandwidth Monitoring
+  # Scrape interval set to 1 hour to avoid bandwidth caps
+  # ---------------------------------------------------------------------------
+  - job_name: 'speedtest'
+    scrape_interval: 1h
+    scrape_timeout: 120s
+    static_configs:
+      - targets: ['speedtest:9798']
+        labels:
+          instance: 'speedtest'
+
+  # ---------------------------------------------------------------------------
+  # Blackbox Exporter Self-Monitoring
+  # ---------------------------------------------------------------------------
+  - job_name: 'blackbox'
+    static_configs:
+      - targets: ['blackbox:9115']
+        labels:
+          instance: 'blackbox-exporter'

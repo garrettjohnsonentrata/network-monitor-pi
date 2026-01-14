@@ -1,0 +1,57 @@
+# =============================================================================
+# Blackbox Exporter Configuration
+# ICMP Module for Network Latency & Packet Loss Monitoring
+# =============================================================================
+
+modules:
+  # ---------------------------------------------------------------------------
+  # ICMP Ping Module - Primary module for gaming latency monitoring
+  # ---------------------------------------------------------------------------
+  icmp:
+    prober: icmp
+    timeout: 5s
+    icmp:
+      # Prefer IPv4 for consistent gaming metrics
+      preferred_ip_protocol: ip4
+      ip_protocol_fallback: false
+      # Enable Don't Fragment bit for accurate MTU testing
+      dont_fragment: true
+      # Payload size in bytes (default ICMP echo request)
+      payload_size: 56
+
+  # ---------------------------------------------------------------------------
+  # ICMP with larger payload - For MTU testing
+  # ---------------------------------------------------------------------------
+  icmp_mtu:
+    prober: icmp
+    timeout: 5s
+    icmp:
+      preferred_ip_protocol: ip4
+      ip_protocol_fallback: false
+      dont_fragment: true
+      # Larger payload to test MTU issues
+      payload_size: 1472
+
+  # ---------------------------------------------------------------------------
+  # TCP Connect Module - For port availability checks
+  # ---------------------------------------------------------------------------
+  tcp_connect:
+    prober: tcp
+    timeout: 5s
+    tcp:
+      preferred_ip_protocol: ip4
+
+  # ---------------------------------------------------------------------------
+  # HTTP Module - For web endpoint checks
+  # ---------------------------------------------------------------------------
+  http_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      preferred_ip_protocol: ip4
+      valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+      valid_status_codes: []  # Defaults to 2xx
+      method: GET
+      follow_redirects: true
+      fail_if_ssl: false
+      fail_if_not_ssl: false
