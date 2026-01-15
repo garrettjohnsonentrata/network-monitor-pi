@@ -42,6 +42,19 @@ modules:
       preferred_ip_protocol: ip4
 
   # ---------------------------------------------------------------------------
+  # DNS Module - For DNS resolution latency checks
+  # ---------------------------------------------------------------------------
+  dns:
+    prober: dns
+    timeout: 5s
+    dns:
+      preferred_ip_protocol: ip4
+      query_name: "example.com"
+      query_type: "A"
+      transport_protocol: "udp"
+      recursion_desired: true
+
+  # ---------------------------------------------------------------------------
   # HTTP Module - For web endpoint checks
   # ---------------------------------------------------------------------------
   http_2xx:

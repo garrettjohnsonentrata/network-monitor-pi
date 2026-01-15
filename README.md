@@ -11,6 +11,10 @@ Monitor your ISP connection quality with metrics that matter for gaming: **Jitte
 git clone <your-repo-url>
 cd pi-network-tester
 
+# 1.5 Configure Discord alerts (optional but recommended)
+cp .env.example .env
+# Edit .env and set DISCORD_WEBHOOK_URL
+
 # 2. Run setup (installs Docker if needed)
 chmod +x setup.sh
 ./setup.sh

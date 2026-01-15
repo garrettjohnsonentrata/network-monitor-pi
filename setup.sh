@@ -73,6 +73,7 @@ else
 fi
 
 echo -e "${YELLOW}[6/7]${NC} Creating required directories..."
+mkdir -p "${SCRIPT_DIR}/alertmanager"
 mkdir -p "${SCRIPT_DIR}/prometheus/targets"
 mkdir -p "${SCRIPT_DIR}/grafana/provisioning/datasources"
 mkdir -p "${SCRIPT_DIR}/grafana/provisioning/dashboards"

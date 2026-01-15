@@ -19,6 +19,7 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./prometheus/blackbox.yml:/etc/prometheus/blackbox.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
       - ./prometheus/targets:/etc/prometheus/targets:ro
       - prometheus-data:/prometheus
     ports:
@@ -152,6 +153,116 @@ services:
           memory: 50M
 
   # =============================================================================
+  # ALERTMANAGER - Notifications & Alert Routing
+  # =============================================================================
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: alertmanager
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - "9093:9093"
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 30M
+        reservations:
+          memory: 15M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9093/-/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =============================================================================
+  # DISCORD RELAY - Alertmanager Webhook -> Discord Webhook
+  # =============================================================================
+  discord-relay:
+    image: python:3.12-alpine
+    container_name: discord-relay
+    restart: unless-stopped
+    command: ["python", "/app/discord_relay.py"]
+    env_file:
+      - ./.env
+    volumes:
+      - ./scripts/discord_relay.py:/app/discord_relay.py:ro
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 40M
+        reservations:
+          memory: 20M
+
+  # =============================================================================
+  # UPTIME KUMA - Lightweight Uptime Monitoring
+  # =============================================================================
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    restart: unless-stopped
+    volumes:
+      - uptime-kuma-data:/app/data
+    ports:
+      - "3001:3001"
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 80M
+        reservations:
+          memory: 40M
+
+  # =============================================================================
+  # VNSTAT - Bandwidth Usage Tracking (Host Network Required)
+  # =============================================================================
+  vnstat:
+    image: vergoh/vnstat:latest
+    container_name: vnstat
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - vnstat-data:/var/lib/vnstat
+    environment:
+      - INTERFACE=eth0
+    deploy:
+      resources:
+        limits:
+          memory: 15M
+        reservations:
+          memory: 8M
+
+  # =============================================================================
+  # VNSTAT EXPORTER - Prometheus Metrics for Bandwidth Usage
+  # =============================================================================
+  vnstat-exporter:
+    image: jbrunicardi/vnstat-exporter:latest
+    container_name: vnstat-exporter
+    restart: unless-stopped
+    volumes:
+      - vnstat-data:/var/lib/vnstat:ro
+    ports:
+      - "9176:9176"
+    networks:
+      - monitoring
+    depends_on:
+      - vnstat
+    deploy:
+      resources:
+        limits:
+          memory: 15M
+        reservations:
+          memory: 8M
+
+  # =============================================================================
   # GATEWAY FINDER - Auto-Discovery Sidecar
   # =============================================================================
   gateway-finder:
@@ -186,4 +297,8 @@ volumes:
   prometheus-data:
     driver: local
   grafana-data:
+    driver: local
+  uptime-kuma-data:
+    driver: local
+  vnstat-data:
     driver: local

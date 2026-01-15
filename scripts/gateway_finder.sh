@@ -7,11 +7,13 @@
 set -e
 
 # Configuration
-TARGETS_FILE="/targets/targets.json"
-TEMP_FILE="/tmp/targets.json.tmp"
+ICMP_TARGETS_FILE="/targets/icmp_targets.json"
+DNS_TARGETS_FILE="/targets/dns_targets.json"
+ICMP_TEMP_FILE="/tmp/icmp_targets.json.tmp"
+DNS_TEMP_FILE="/tmp/dns_targets.json.tmp"
 
-# Static targets (always included)
-STATIC_TARGETS='
+# Static ICMP targets (always included)
+STATIC_ICMP_TARGETS='
   {
     "targets": ["1.1.1.1"],
     "labels": {
@@ -39,6 +41,34 @@ STATIC_TARGETS='
   }
 '
 
+# Static DNS targets (always included)
+STATIC_DNS_TARGETS='
+  {
+    "targets": ["1.1.1.1:53"],
+    "labels": {
+      "target_name": "cloudflare_dns",
+      "target_type": "dns",
+      "provider": "cloudflare"
+    }
+  },
+  {
+    "targets": ["8.8.8.8:53"],
+    "labels": {
+      "target_name": "google_dns",
+      "target_type": "dns",
+      "provider": "google"
+    }
+  },
+  {
+    "targets": ["9.9.9.9:53"],
+    "labels": {
+      "target_name": "quad9_dns",
+      "target_type": "dns",
+      "provider": "quad9"
+    }
+  }
+'
+
 # Function to get the default gateway IP
 get_gateway_ip() {
     # Try ip route first (most reliable on Linux)
@@ -58,7 +88,7 @@ get_gateway_ip() {
 }
 
 # Function to generate the targets JSON
-generate_targets_json() {
+generate_icmp_targets_json() {
     local gateway_ip="$1"
     
     if [ -n "$gateway_ip" ]; then
@@ -73,13 +103,21 @@ generate_targets_json() {
       "provider": "isp"
     }
   },
-${STATIC_TARGETS}
+${STATIC_ICMP_TARGETS}
 ]
 EOF
     else
         # No gateway found, only include static targets
-        echo "[$STATIC_TARGETS]"
+        echo "[$STATIC_ICMP_TARGETS]"
     fi
+}
+
+generate_dns_targets_json() {
+    cat << EOF
+[
+${STATIC_DNS_TARGETS}
+]
+EOF
 }
 
 # Main execution
@@ -96,26 +134,38 @@ main() {
     fi
     
     # Generate the targets JSON
-    generate_targets_json "$GATEWAY_IP" > "$TEMP_FILE"
+    generate_icmp_targets_json "$GATEWAY_IP" > "$ICMP_TEMP_FILE"
+    generate_dns_targets_json > "$DNS_TEMP_FILE"
     
     # Validate JSON syntax
     if command -v jq >/dev/null 2>&1; then
-        if ! jq empty "$TEMP_FILE" 2>/dev/null; then
-            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: Generated invalid JSON"
-            rm -f "$TEMP_FILE"
+        if ! jq empty "$ICMP_TEMP_FILE" 2>/dev/null; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: Generated invalid ICMP JSON"
+            rm -f "$ICMP_TEMP_FILE"
+            exit 1
+        fi
+        if ! jq empty "$DNS_TEMP_FILE" 2>/dev/null; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: Generated invalid DNS JSON"
+            rm -f "$DNS_TEMP_FILE"
             exit 1
         fi
     fi
     
     # Atomic move to prevent partial reads
-    mv "$TEMP_FILE" "$TARGETS_FILE"
+    mv "$ICMP_TEMP_FILE" "$ICMP_TARGETS_FILE"
+    mv "$DNS_TEMP_FILE" "$DNS_TARGETS_FILE"
     
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Targets file updated: ${TARGETS_FILE}"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ICMP targets file updated: ${ICMP_TARGETS_FILE}"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] DNS targets file updated: ${DNS_TARGETS_FILE}"
     
     # Log the targets for debugging
     if command -v jq >/dev/null 2>&1; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Current targets:"
-        jq -r '.[].targets[0]' "$TARGETS_FILE" 2>/dev/null | while read -r target; do
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Current ICMP targets:"
+        jq -r '.[].targets[0]' "$ICMP_TARGETS_FILE" 2>/dev/null | while read -r target; do
+            echo "  - $target"
+        done
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Current DNS targets:"
+        jq -r '.[].targets[0]' "$DNS_TARGETS_FILE" 2>/dev/null | while read -r target; do
             echo "  - $target"
         done
     fi

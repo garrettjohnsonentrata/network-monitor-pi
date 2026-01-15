@@ -9,6 +9,14 @@ global:
   external_labels:
     monitor: 'pi-network-tester'
 
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
 # =============================================================================
 # Scrape Configurations
 # =============================================================================
@@ -41,7 +49,7 @@ scrape_configs:
       module: [icmp]
     file_sd_configs:
       - files:
-          - '/etc/prometheus/targets/*.json'
+          - '/etc/prometheus/targets/icmp_targets.json'
         refresh_interval: 1m
     relabel_configs:
       # Pass the target to the blackbox exporter
@@ -51,6 +59,44 @@ scrape_configs:
       - source_labels: [__param_target]
         target_label: target
       # Replace the address with blackbox exporter address
+      - target_label: __address__
+        replacement: blackbox:9115
+
+  # ---------------------------------------------------------------------------
+  # Blackbox Exporter - DNS Monitoring
+  # ---------------------------------------------------------------------------
+  - job_name: 'blackbox-dns'
+    metrics_path: /probe
+    params:
+      module: [dns]
+    file_sd_configs:
+      - files:
+          - '/etc/prometheus/targets/dns_targets.json'
+        refresh_interval: 1m
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: target
+      - target_label: __address__
+        replacement: blackbox:9115
+
+  # ---------------------------------------------------------------------------
+  # Blackbox Exporter - TCP Connect (Game Servers)
+  # ---------------------------------------------------------------------------
+  - job_name: 'blackbox-tcp'
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    file_sd_configs:
+      - files:
+          - '/etc/prometheus/targets/game_servers.json'
+        refresh_interval: 5m
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: target
       - target_label: __address__
         replacement: blackbox:9115
 
@@ -65,6 +111,25 @@ scrape_configs:
       - targets: ['speedtest:9798']
         labels:
           instance: 'speedtest'
+
+  # ---------------------------------------------------------------------------
+  # Alertmanager - Alert Routing and Notifications
+  # ---------------------------------------------------------------------------
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+        labels:
+          instance: 'alertmanager'
+
+  # ---------------------------------------------------------------------------
+  # vnStat Exporter - Bandwidth Usage Metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'vnstat'
+    scrape_interval: 1m
+    static_configs:
+      - targets: ['vnstat-exporter:9176']
+        labels:
+          instance: 'vnstat'
 
   # ---------------------------------------------------------------------------
   # Blackbox Exporter Self-Monitoring

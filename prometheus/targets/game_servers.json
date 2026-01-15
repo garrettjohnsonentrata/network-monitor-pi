@@ -1,0 +1,42 @@
+[
+  {
+    "targets": ["dynamodb.us-east-1.amazonaws.com:443"],
+    "labels": {
+      "target_name": "riot_services",
+      "target_type": "game",
+      "provider": "riot"
+    }
+  },
+  {
+    "targets": ["cm.steampowered.com:27017"],
+    "labels": {
+      "target_name": "steam_cm",
+      "target_type": "game",
+      "provider": "steam"
+    }
+  },
+  {
+    "targets": ["xboxlive.com:443"],
+    "labels": {
+      "target_name": "xbox_live",
+      "target_type": "game",
+      "provider": "microsoft"
+    }
+  },
+  {
+    "targets": ["playstation.net:443"],
+    "labels": {
+      "target_name": "playstation_network",
+      "target_type": "game",
+      "provider": "sony"
+    }
+  },
+  {
+    "targets": ["discord.gg:443"],
+    "labels": {
+      "target_name": "discord",
+      "target_type": "voice",
+      "provider": "discord"
+    }
+  }
+]

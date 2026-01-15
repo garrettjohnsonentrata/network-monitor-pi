@@ -1,0 +1,89 @@
+# =============================================================================
+# Prometheus Alert Rules - Network Health & Raspberry Pi Monitoring
+# =============================================================================
+
+groups:
+  - name: network-health
+    rules:
+      - alert: TargetDown
+        expr: probe_success == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Target is down"
+          description: "{{ $labels.target_name }} ({{ $labels.target }}) has been unreachable for more than 2 minutes."
+
+      - alert: HighLatency
+        expr: probe_icmp_duration_seconds{phase="rtt"} * 1000 > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency detected"
+          description: "{{ $labels.target_name }} latency is above 100ms for 5 minutes."
+
+      - alert: HighJitter
+        expr: stddev_over_time(probe_icmp_duration_seconds{phase="rtt"}[5m]) * 1000 > 20
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High jitter detected"
+          description: "{{ $labels.target_name }} jitter exceeded 20ms for 10 minutes."
+
+      - alert: PacketLoss
+        expr: (1 - avg_over_time(probe_success[5m])) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Packet loss detected"
+          description: "{{ $labels.target_name }} packet loss exceeded 5% for 5 minutes."
+
+      - alert: LowBandwidthDownload
+        expr: speedtest_download_bits_per_second / 1000000 < 10
+        for: 2h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low download bandwidth"
+          description: "Download speed has been below 10 Mbps for 2 hours."
+
+      - alert: LowBandwidthUpload
+        expr: speedtest_upload_bits_per_second / 1000000 < 2
+        for: 2h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low upload bandwidth"
+          description: "Upload speed has been below 2 Mbps for 2 hours."
+
+  - name: pi-health
+    rules:
+      - alert: PiHighCPU
+        expr: (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m]))) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "Raspberry Pi CPU usage > 90% for 5 minutes."
+
+      - alert: PiLowMemory
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) < 0.10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low available memory"
+          description: "Raspberry Pi available memory is below 10%."
+
+      - alert: PiHighTemperature
+        expr: node_hwmon_temp_celsius > 80
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High CPU temperature"
+          description: "Raspberry Pi CPU temperature is above 80°C."

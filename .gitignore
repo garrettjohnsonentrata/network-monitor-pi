@@ -3,7 +3,11 @@
 # =============================================================================
 
 # Auto-generated targets file (created by gateway_finder.sh)
-prometheus/targets/targets.json
+prometheus/targets/icmp_targets.json
+prometheus/targets/dns_targets.json
+
+# Local environment overrides (secrets)
+.env
 
 # Docker volumes (data is stored in named volumes, not local dirs)
 # But if you change to bind mounts, these would be ignored:

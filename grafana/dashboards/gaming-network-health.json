@@ -33,7 +33,7 @@
       },
       "id": 100,
       "panels": [],
-      "title": "🎮 Gaming Network Health Overview",
+      "title": "\ud83c\udfae Gaming Network Health Overview",
       "type": "row"
     },
     {
@@ -478,7 +478,7 @@
       },
       "id": 101,
       "panels": [],
-      "title": "📊 Latency Analysis",
+      "title": "\ud83d\udcca Latency Analysis",
       "type": "row"
     },
     {
@@ -842,7 +842,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "le": 1e-9
+          "le": 1e-09
         },
         "legend": {
           "show": true
@@ -888,7 +888,7 @@
       },
       "id": 102,
       "panels": [],
-      "title": "🚀 Bandwidth (Hourly)",
+      "title": "\ud83d\ude80 Bandwidth (Hourly)",
       "type": "row"
     },
     {
@@ -1101,7 +1101,7 @@
       },
       "id": 103,
       "panels": [],
-      "title": "🖥️ Raspberry Pi Health",
+      "title": "\ud83d\udda5\ufe0f Raspberry Pi Health",
       "type": "row"
     },
     {
@@ -1409,7 +1409,7 @@
       },
       "id": 104,
       "panels": [],
-      "title": "📋 Probe Status",
+      "title": "\ud83d\udccb Probe Status",
       "type": "row"
     },
     {
@@ -1609,6 +1609,126 @@
         }
       ],
       "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 45
+      },
+      "id": 1000,
+      "panels": [],
+      "title": "\ud83c\udf10 DNS & Traffic",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 46
+      },
+      "id": 1001,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "probe_dns_lookup_time_seconds * 1000",
+          "legendFormat": "{{target_name}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "DNS Lookup Latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Mbps",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 46
+      },
+      "id": 1002,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "rate(vnstat_interface_rx_bytes_total[5m]) * 8 / 1000000",
+          "legendFormat": "RX {{interface}}",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "rate(vnstat_interface_tx_bytes_total[5m]) * 8 / 1000000",
+          "legendFormat": "TX {{interface}}",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "WAN Throughput (vnStat)",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
